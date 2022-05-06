@@ -31,6 +31,7 @@ function normalize(x, unit_scale) {
     // scale = 100 / x[x.length - 1];
     return x.map(xi => scale * xi);
 }
+
 function plot_chart(data, chart_key, unit_scale, y_label) {
     var chart = d3.select('#chart_' + chart_key).node();
     var series = Object.keys(data).map(function (key) {
@@ -41,9 +42,25 @@ function plot_chart(data, chart_key, unit_scale, y_label) {
         }
     });
     var layout = {
+        margin: {b: 40, t: 20},
+        hovermode: 'closest',
+        yaxis: {title: y_label, type: 'log'},
+        legend: {"orientation": "h"}
+    }
+    Plotly.plot(chart, series, layout);
+    return chart;
+}
+
+function plot_summary_chart(data, series_info) {
+    var chart = d3.select('#chart_summary' ).node();
+    var series = series_info.map(function (item) {
+        return {x: data["dates"], y: data[item[0]], name: item[1]}
+    });
+    var layout = {
         margin: {b: 40, t: 20}, 
         hovermode: 'closest',
-        yaxis: {title: y_label}
+        yaxis: {title: 'Index (normalized to 100)', range: [0, 125]},
+        legend: {"orientation": "h"}
     }
     Plotly.plot(chart, series, layout);
     return chart;
@@ -51,6 +68,21 @@ function plot_chart(data, chart_key, unit_scale, y_label) {
 
 (function() {
     var charts = [];
+    load_json("summary_data.json", function (data) {
+        var chart = plot_summary_chart(
+            data,
+            [
+                ['time_min', "Minimum wall time (seconds)"],
+                ['time_median', "Median wall time (seconds)"],
+                ['gc_min', "Minimum gc time (seconds)"],
+                ['gc_median', "Median gc time (seconds)"],
+                ['allocs', "# allocations"],
+                ['memory', "Memory allocated"]
+            ],
+        )
+        charts.push(chart);
+        return
+    });
     load_json("data.json", function (data) {
         charts.push(plot_chart(data, 'time_min', 1e9, "Wall time (seconds)"));
         charts.push(plot_chart(data, 'gc_min', 1e9, "Wall time (seconds)"));
