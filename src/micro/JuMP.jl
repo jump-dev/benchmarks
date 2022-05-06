@@ -37,4 +37,3 @@ function benchmark_jump_creating_small_constraints()
     @objective(model, Min, sum(x))
     return
 end
-

@@ -19,15 +19,18 @@ function main()
         d
     end)
     @objective(model, Min, d)
-    @constraint(model, [i in 0:G, j in 0:G], sum(z[i,j,f] for f in 1:F) == 1)
+    @constraint(model, [i in 0:G, j in 0:G], sum(z[i, j, f] for f in 1:F) == 1)
     M = 2 * sqrt(2)
     for i in 0:G, j in 0:G, f in 1:F
-        @constraints(model, begin
-            s[i, j, f] == d + M * (1 - z[i, j, f])
-            r[i, j, f, 1] == i / G - y[f, 1]
-            r[i, j, f, 2] == j / G - y[f, 2]
-            sum(r[i, j, f, k]^2 for k in 1:2) <= s[i, j, f]^2
-        end)
+        @constraints(
+            model,
+            begin
+                s[i, j, f] == d + M * (1 - z[i, j, f])
+                r[i, j, f, 1] == i / G - y[f, 1]
+                r[i, j, f, 2] == j / G - y[f, 2]
+                sum(r[i, j, f, k]^2 for k in 1:2) <= s[i, j, f]^2
+            end
+        )
     end
     optimize!(model)
     return
