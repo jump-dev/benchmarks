@@ -4,3 +4,46 @@ Copyright (c) 2022: jump-dev/benchmarks contributors
 Use of this source code is governed by an MIT-style license that can be found
 in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 -->
+
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0" />
+    <title>JuMP-dev performance benchmarks</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.7/css/materialize.min.css">
+    <link href="assets/main.css" type="text/css" rel="stylesheet" media="screen,projection" />
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <div class="section no-pad-bot" id="index-banner">
+        <div class="col s12 m12 l8 flow-text container">
+            <img width="300" src="assets/logo.svg">
+            <p class="small-text">
+                This page tracks peformance benchmarks of the
+                <a href="https://github.com/jump-dev">JuMP-dev</a> ecosystem.
+            </p>
+            <p class="small-text">
+                The list of benchmarks are curated in the
+                <a href="https://github.com/jump-dev/benchmarks">jump-dev/benchmarks</a>
+                repository. New submissions are welcome!
+            </p>
+            <div class="divider"></div>
+            <h4>Run time</h4>
+            <div id="chart_time_min"></div>
+            <h4>GC time</h4>
+            <div id="chart_gc_min"></div>
+            <h4>Allocations</h4>
+            <div id="chart_allocs"></div>
+            <h4>Memory</h4>
+            <div id="chart_memory"></div>
+            <div class="divider"></div>
+            <p class="subtitle">
+                Made with <a href="http://materializecss.com">Materialize</a>
+            </p>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="assets/main.js" type="text/javascript"></script>
+</body>
+</html>
