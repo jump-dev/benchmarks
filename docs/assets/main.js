@@ -32,11 +32,17 @@ function normalize(x, unit_scale) {
     return x.map(xi => scale * xi);
 }
 
+function to_date(x) {
+    return x.map(function (xi) {
+        return xi.slice(0, 10) + ' ' + xi.slice(11, 13) + ':' + xi.slice(14, 16)
+    });
+}
+
 function plot_chart(data, chart_key, unit_scale, y_label) {
     var chart = d3.select('#chart_' + chart_key).node();
     var series = Object.keys(data).map(function (key) {
         return {
-            x: data[key]["dates"], 
+            x: to_date(data[key]["dates"]),
             y: normalize(data[key][chart_key], unit_scale), 
             name: key,
         }
@@ -54,7 +60,7 @@ function plot_chart(data, chart_key, unit_scale, y_label) {
 function plot_summary_chart(data, series_info) {
     var chart = d3.select('#chart_summary' ).node();
     var series = series_info.map(function (item) {
-        return {x: data["dates"], y: data[item[0]], name: item[1]}
+        return {x: to_date(data["dates"]), y: data[item[0]], name: item[1]}
     });
     var layout = {
         margin: {b: 40, t: 20}, 
