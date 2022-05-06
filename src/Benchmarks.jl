@@ -146,7 +146,7 @@ function _rebuild_data_json()
         end
     end
     open(joinpath(dirname(@__DIR__), "docs", "data.json"), "w") do io
-        write(io, JSON.json(output))
+        return write(io, JSON.json(output))
     end
     return dates, output
 end
@@ -161,7 +161,7 @@ function _normalized_data(dates, data)
         output[key] = _normalized_data(dates_to_index, data, key)
     end
     open(joinpath(dirname(@__DIR__), "docs", "summary_data.json"), "w") do io
-        write(io, JSON.json(output))
+        return write(io, JSON.json(output))
     end
     return output
 end
