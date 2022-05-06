@@ -15,7 +15,11 @@ import Statistics
 
 const DATA_DIR = joinpath(dirname(@__DIR__), "data")
 
-include("micro/JuMP.jl")
+for file in readdir("micro")
+    if endswith(file, ".jl")
+        include(joinpath(@__DIR__, "micro", file))
+    end
+end
 
 function _run_latency(filename)
     julia_cmd = get(ENV, "JULIA_CMD", joinpath(ENV["HOME"], "julia"))

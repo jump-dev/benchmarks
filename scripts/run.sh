@@ -9,6 +9,7 @@
 git pull
 
 # Run the new benchmarks
+~/julia --project=. -e 'import Pkg; Pkg.update()'
 ~/julia --project=. scripts/benchmarks.jl --run
 ~/julia --project=. scripts/benchmarks.jl --publish
 
