@@ -38,13 +38,32 @@ function to_date(x) {
     });
 }
 
+function plot_latency_chart(data, unit_scale, y_label) {
+    var chart = d3.select('#chart_latency').node();
+    var series = Object.keys(data).sort().filter(word => word.slice(0, 5) != "bench").map(function (key) {
+        return {
+            x: to_date(data[key]["dates"]),
+            y: normalize(data[key]['time_min'], unit_scale), 
+            name: key,
+        }
+    });
+    var layout = {
+        margin: {b: 40, t: 20},
+        hovermode: 'closest',
+        yaxis: {title: y_label, type: 'log'},
+        legend: {"orientation": "h"}
+    }
+    Plotly.plot(chart, series, layout);
+    return chart;
+}
+
 function plot_chart(data, chart_key, unit_scale, y_label) {
-    var chart = d3.select('#chart_' + chart_key).node();
-    var series = Object.keys(data).map(function (key) {
+    var chart = d3.select('#chart_micro_' + chart_key).node();
+    var series = Object.keys(data).sort().filter(word => word.slice(0, 5) == "bench").map(function (key) {
         return {
             x: to_date(data[key]["dates"]),
             y: normalize(data[key][chart_key], unit_scale), 
-            name: key,
+            name: key.slice(10, key.length),
         }
     });
     var layout = {
@@ -90,6 +109,7 @@ function plot_summary_chart(data, series_info) {
         return
     });
     load_json("data.json", function (data) {
+        charts.push(plot_latency_chart(data, 1e9, "Wall time (seconds)"));
         charts.push(plot_chart(data, 'time_min', 1e9, "Wall time (seconds)"));
         charts.push(plot_chart(data, 'gc_min', 1e9, "Wall time (seconds)"));
         charts.push(plot_chart(data, 'allocs', 1, "Total allocations"));
