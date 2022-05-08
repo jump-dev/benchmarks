@@ -8,7 +8,7 @@ import JuMP
 import PowerModels
 
 function main(case::String)
-    data = PowerModels.parse_file(joinpath(@__DIR__, "data", case))
+    data = PowerModels.parse_file(joinpath(@__DIR__, "data", case * ".m"))
     solver = JuMP.optimizer_wth_attributes(Ipopt.Optimizer, "tol" => 1e-6)
     result = PowerModels.run_opf(data, PowerModels.ACPPowerModel, solver)
     println()
