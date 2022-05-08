@@ -30,15 +30,16 @@ function test_microbenchmarks()
     return
 end
 
-function test_latency_gurobi_facility()
-    ret = Benchmarks._run_latency("gurobi_facility.jl", 2)
-    Test.@test ret.exitcode == 0
-    return
-end
-
-function test_latency_ipopt_jump_2788()
-    ret = Benchmarks._run_latency("ipopt_jump_2788.jl", 20)
-    Test.@test ret.exitcode == 0
+function test_latency()
+    for (file, arg) in [
+        "gurobi_facility.jl" => 2,
+        "gurobi_lqcp.jl" => 2,
+        "ipopt_jump_2788.jl" => 20,
+        "ipopt_clnlbeam.jl" => 1,
+    ]
+        ret = Benchmarks._run_latency(file, arg)
+        Test.@test ret.exitcode == 0
+    end
     return
 end
 

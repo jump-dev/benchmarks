@@ -27,10 +27,19 @@ const LATENCY_EXAMPLES = [
     "gurobi_facility.jl" => 50,
     "gurobi_facility.jl" => 75,
     "gurobi_facility.jl" => 100,
+    # gurobi_lqcp
+    "gurobi_lqcp.jl" => 500,
+    "gurobi_lqcp.jl" => 1000,
+    "gurobi_lqcp.jl" => 1500,
+    "gurobi_lqcp.jl" => 2000,
     # ipopt_jump_2788
     "ipopt_jump_2788.jl" => 200,
     "ipopt_jump_2788.jl" => 400,
     "ipopt_jump_2788.jl" => 800,
+    # ipopt_clnlbeam
+    "ipopt_clnlbeam.jl" => 5,
+    "ipopt_clnlbeam.jl" => 50,
+    "ipopt_clnlbeam.jl" => 500,
 ]
 
 function _run_latency(filename, arg)
