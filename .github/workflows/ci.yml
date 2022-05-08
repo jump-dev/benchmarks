@@ -1,0 +1,28 @@
+name: test
+on:
+  push:
+    branches:
+      - master
+      - release-*
+  pull_request:
+    types: [opened, synchronize, reopened]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: julia-actions/setup-julia@latest
+        with:
+          version: '1'
+      - uses: actions/checkout@v1
+      - shell: bash
+        env:
+          WLSLICENSE: ${{ secrets.WLSLICENSE }}
+        run: |
+          mkdir -p /opt/gurobi
+          echo "$WLSLICENSE" > /opt/gurobi/gurobi.lic
+      - name: Install
+        run: julia --project=. -e 'import Pkg; Pkg.instantiate()'
+      - name: Test
+        env:
+          JULIA_CMD: julia
+        run: julia --project=. test/runtests.jl
