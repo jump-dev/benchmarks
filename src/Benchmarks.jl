@@ -40,6 +40,8 @@ const LATENCY_EXAMPLES = [
     "ipopt_clnlbeam.jl" => 5,
     "ipopt_clnlbeam.jl" => 50,
     "ipopt_clnlbeam.jl" => 500,
+    # power_models
+    "power_models_opf_acp.jl" => "pglib_opf_case5_pjm",
 ]
 
 function _run_latency(filename, arg)

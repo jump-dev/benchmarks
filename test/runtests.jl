@@ -36,6 +36,7 @@ function test_latency()
         "gurobi_lqcp.jl" => 2,
         "ipopt_jump_2788.jl" => 20,
         "ipopt_clnlbeam.jl" => 1,
+        "power_models_opf_acp.jl" => "pglib_opf_case5_pjm",
     ]
         ret = Benchmarks._run_latency(file, arg)
         Test.@test ret.exitcode == 0
