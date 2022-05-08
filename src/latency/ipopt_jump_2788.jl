@@ -7,9 +7,9 @@ using JuMP
 import Ipopt
 import Random
 
-function main()
+function main(N::Int)
     Random.seed!(1234)
-    k = 800
+    k = N
     n = 12
     p = rand(400:700, k, 1)
     c1 = rand(100:200, k, n)
@@ -33,4 +33,4 @@ function main()
     return
 end
 
-main()
+main(parse(Int, ARGS[1]))

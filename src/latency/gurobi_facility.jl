@@ -6,9 +6,9 @@
 using JuMP
 import Gurobi
 
-function main()
+function main(N::Int)
     model = Model(Gurobi.Optimizer)
-    G, F = 50, 50
+    G, F = N, N
     set_time_limit_sec(model, 0.0)
     set_optimizer_attribute(model, "Presolve", 0)
     @variables(model, begin
@@ -36,4 +36,4 @@ function main()
     return
 end
 
-main()
+main(parse(Int, ARGS[1]))
