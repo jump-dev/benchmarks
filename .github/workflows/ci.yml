@@ -14,5 +14,7 @@ jobs:
         with:
           version: '1'
       - uses: actions/checkout@v1
+      - name: Install
+        run: julia --project=. -e 'import Pkg; Pkg.instantiate()'
       - name: Test
         run: julia --project=. test/runtests.jl
