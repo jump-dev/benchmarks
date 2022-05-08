@@ -16,6 +16,15 @@ track:
    Each benchmark is a function beginning with `benchmark_`, and tests a small,
    self-contained feature of the package.
 
+## Running the benchmark script
+
+Run the benchmarks using `scripts/benchmarks.jl`:
+```
+julia --project=. scripts/benchmarks.jl --tune
+julia --project=. scripts/benchmarks.jl --run
+julia --project=. scripts/benchmarks.jl --publish
+```
+
 ## Dashboard improvements
 
 The visualizations at [jump.dev/benchmarks](https://jump.dev/benchmarks) are
