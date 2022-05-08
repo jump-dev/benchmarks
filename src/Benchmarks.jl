@@ -21,11 +21,23 @@ for file in readdir(joinpath(@__DIR__, "micro"))
     end
 end
 
-function _run_latency(filename)
+const LATENCY_EXAMPLES = [
+    # gurobi_facility
+    "gurobi_facility.jl" => 25,
+    "gurobi_facility.jl" => 50,
+    "gurobi_facility.jl" => 75,
+    "gurobi_facility.jl" => 100,
+    # ipopt_jump_2788
+    "ipopt_jump_2788.jl" => 200,
+    "ipopt_jump_2788.jl" => 400,
+    "ipopt_jump_2788.jl" => 800,
+]
+
+function _run_latency(filename, arg)
     julia_cmd = get(ENV, "JULIA_CMD", joinpath(ENV["HOME"], "julia"))
     project = dirname(@__DIR__)
     file = joinpath(@__DIR__, "latency", filename)
-    return Base.run(`$julia_cmd --project=$project $file`)
+    return Base.run(`$julia_cmd --project=$project $file $arg`)
 end
 
 function _benchmark_suite()
@@ -36,10 +48,9 @@ function _benchmark_suite()
             suite[string(name)] = BenchmarkTools.@benchmarkable $f()
         end
     end
-    for file in readdir(joinpath(@__DIR__, "latency"))
-        if endswith(file, ".jl")
-            suite[file] = BenchmarkTools.@benchmarkable _run_latency($file)
-        end
+    for (file, arg) in LATENCY_EXAMPLES
+        suite["$file $arg"] =
+            BenchmarkTools.@benchmarkable _run_latency($file, $arg)
     end
     return suite
 end

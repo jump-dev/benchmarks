@@ -31,13 +31,13 @@ function test_microbenchmarks()
 end
 
 function test_latency_gurobi_facility()
-    ret = Benchmarks._run_latency("gurobi_facility.jl")
+    ret = Benchmarks._run_latency("gurobi_facility.jl", 2)
     Test.@test ret.exitcode == 0
     return
 end
 
 function test_latency_ipopt_jump_2788()
-    ret = Benchmarks._run_latency("ipopt_jump_2788.jl")
+    ret = Benchmarks._run_latency("ipopt_jump_2788.jl", 20)
     Test.@test ret.exitcode == 0
     return
 end
