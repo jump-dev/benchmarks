@@ -11,7 +11,9 @@ import Ipopt
 import BenchmarkTools
 import InteractiveUtils
 import JSON
+import LinearAlgebra
 import Pkg
+import Random
 import Statistics
 
 const DATA_DIR = joinpath(dirname(@__DIR__), "data")
