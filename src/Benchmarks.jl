@@ -6,6 +6,7 @@
 module Benchmarks
 
 using JuMP
+import Ipopt
 
 import BenchmarkTools
 import InteractiveUtils
