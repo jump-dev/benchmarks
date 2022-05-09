@@ -14,4 +14,6 @@ elseif get(ARGS, 1, "") == "--tune"
     Benchmarks.tune()
 elseif get(ARGS, 1, "") == "--publish"
     Benchmarks.publish()
+elseif get(ARGS, 1, "") == "--historical"
+    Benchmarks.run("$(ARGS[2])-00-00")
 end
