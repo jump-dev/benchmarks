@@ -194,11 +194,13 @@ end
 function _normalized_data(dates_to_index, data, key)
     outputs = [Float64[] for _ in 1:length(dates_to_index)]
     for (_, result) in data
-        offset = max(1.0, Statistics.mean(result[key]))
-        scale_factor = 100 / (offset + result[key][1])
+        if any(iszero, result[key])
+            continue  # skip normalizing for tests with 0 allocations, etc.
+        end
+        scale_factor = 100 / result[key][1]
         for (i, date) in enumerate(result["dates"])
             index = dates_to_index[date]
-            new_value = scale_factor * (offset + result[key][i])
+            new_value = scale_factor * result[key][i]
             push!(outputs[index], new_value)
         end
     end
