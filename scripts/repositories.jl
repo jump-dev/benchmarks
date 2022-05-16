@@ -30,7 +30,7 @@ end
 
 function get_repos(since, until)
     my_auth = GitHub.authenticate(ENV["PERSONAL_ACCESS_TOKEN"])
-    all_repos, _ = GitHub.repos("jump-dev", auth = my_auth);
+    all_repos, _ = GitHub.repos("jump-dev", auth = my_auth)
     return Dict(
         repo => Repository(
             "jump-dev/" * repo;
@@ -138,11 +138,8 @@ function print_all_contributors(; minimum_prs::Int = 1)
         for item in pkg_data
             if item["is_pr"] && item["type"] == "opened"
                 user = item["user"]
-                if user in (
-                    "github-actions[bot]",
-                    "JuliaTagBot",
-                    "femtocleaner[bot]",
-                )
+                if user in
+                   ("github-actions[bot]", "JuliaTagBot", "femtocleaner[bot]")
                     continue
                 end
                 if haskey(prs_by_user, user)
