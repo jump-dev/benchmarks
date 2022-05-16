@@ -1,0 +1,86 @@
+<!-- 
+Copyright (c) 2022: jump-dev/benchmarks contributors
+
+Use of this source code is governed by an MIT-style license that can be found
+in the LICENSE.md file or at https://opensource.org/licenses/MIT.
+-->
+
+<!DOCTYPE html>
+<html lang="en-us">
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0" />
+    <title>JuMP-dev performance benchmarks</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.7/css/materialize.min.css">
+    <link href="../assets/main.css" type="text/css" rel="stylesheet" media="screen,projection" />
+    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+</head>
+<body>
+    <nav class="nav">
+        <div class="nav-wrapper white">
+            <ul class="right">
+                <li><a class="julia-blue" href="../index.html">Performance</a></li>
+                <li class="active"><a class="julia-blue" href="#">Repo activity</a></li>
+            </ul>
+        </div>
+    </nav>        
+    <div class="section no-pad-bot" id="index-banner">
+        <div class="col s12 m12 l8 flow-text container">
+            <a href="https://jump.dev"><img width="300" src="../assets/logo.svg"></a>
+            <h2>Repository activity</h2>
+            <p class="small-text">
+                This page tracks repository activity of the
+                <a href="https://github.com/jump-dev">JuMP-dev</a> ecosystem.
+                We also track <a href="../index.html">performance benchmarks</a>.
+            </p>
+            <div class="divider"></div>
+            <ol class="small-text">
+                <li><a href="#chart_download_statistics">User downloads by package</a></li>
+                <li><a href="#chart_count_open_issues">Count of open issues by package</a></li>
+                <li><a href="#chart_count_open_pull_requests">Count of open pull requests by package</a></li>
+                <li><a href="#chart_cumulative_count_open_issues">Cumulative count of opened issues by package</a></li>
+                <li><a href="#chart_cumulative_count_open_pull_requests">Cumulative count of opened pull requests by package</a></li>
+                <li><a href="#chart_count_users_open_issues">Cumulative count of unique users opening issues by package</a></li>
+                <li><a href="#chart_count_users_open_pull_requests">Cumulative count of unique users opening pull requests package</a></li>
+                <li><a href="#chart_unique_users_open_issues">Cumulative count of opened issues by user</a></li>
+                <li><a href="#chart_unique_users_open_pull_requests">Cumulative count of opened pull request by user</a></li>
+            </ol>
+            <div class="divider"></div>
+            <h4>User downloads by package</h4>
+            <p class="small-text">A chart of approximate download statistics from Julia's package servers.</p>
+            <div id="chart_download_statistics"></div>
+            <div class="divider"></div>
+            <h4>Count of open issues by package</h4>
+            <p class="small-text">Smaller is better. Open issues are a mixture of bugs and feature requests.</p>
+            <div id="chart_count_open_issues"></div>
+            <h4>Count of open pull requests by package</h4>
+            <p class="small-text">Smaller is better. Open pull requests are a sign of of stalled work or slow reviews.</p>
+            <div id="chart_count_open_pull_requests"></div>
+            <h4>Cumulative count of opened issues by package</h4>
+            <p class="small-text">To be viewed in conjunction with the count of open issues. We're more interested in the slope of each line, rather than the absolute numbers.</p>
+            <div id="chart_cumulative_count_open_issues"></div>
+            <h4>Cumulative count of opened pull requests by package</h4>
+            <p class="small-text">To be viewed in conjunction with the count of open pull requests. We're more interested in the slope of each line, rather than the absolute numbers.</p>
+            <div id="chart_cumulative_count_open_pull_requests"></div>
+            <h4>Cumulative count of unique users opening issues by package</h4>
+            <p class="small-text">This doesn't account for the number of issues opened by each user, just the date of their first issue.</p>
+            <div id="chart_count_users_open_issues"></div>
+            <h4>Cumulative count of unique users opening pull requests by package</h4>
+            <p class="small-text">This doesn't account for the number of contributions by each user, just the date of their first contribution.</p>
+            <div id="chart_count_users_open_pull_requests"></div>
+            <h4>Cumulative count of opened issues by user</h4>
+            <p class="small-text">We are mainly interested in the proportion of work done by each user. The vast majority of users make few contributions.</p>
+            <div id="chart_unique_users_open_issues"></div>
+            <h4>Cumulative count of opened pull requests by user</h4>
+            <p class="small-text">We are mainly interested in the proportion of work done by each user. The vast majority of users make few contributions.</p>
+            <div id="chart_unique_users_open_pull_requests"></div>
+            <div class="divider"></div>
+            <p class="subtitle">
+                Made with <a href="http://materializecss.com">Materialize</a>
+            </p>
+        </div>
+    </div>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
+    <script src="../assets/repositories.js" type="text/javascript"></script>
+</body>
+</html>

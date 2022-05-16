@@ -1,3 +1,12 @@
+/* 
+Julia logo colors
+
+ julia-blue   : #4063D8 
+ julia-green  : #389826
+ julia-purple : #9558B2
+ julia-ref    : #CB3C33
+*/
+
 .serif {
     font-family: serif
 }
@@ -17,13 +26,21 @@
 }
 
 a {
-    color: #01579b
+    color: #4063D8 
 }
 
-.tabs .indicator {
-    background-color: #01579b
+.julia-blue {
+    color: #4063D8
 }
 
-.tabs {
-    font-size: 1.25rem;   
+.julia-red {
+    color: #CB3C33
+}
+
+.julia-purple {
+    color: #9558B2
+}
+
+.julia-green {
+    color: #389826
 }
