@@ -30,15 +30,14 @@ end
 
 function get_repos(since, until)
     my_auth = GitHub.authenticate(ENV["PERSONAL_ACCESS_TOKEN"])
-    all_repos, _ = GitHub.repos("jump-dev", auth=my_auth);
+    all_repos, _ = GitHub.repos("jump-dev", auth = my_auth);
     return Dict(
         repo => Repository(
             "jump-dev/" * repo;
             since = since,
             until = until,
             my_auth = my_auth,
-        )
-        for repo in map(r -> "$(r.name)", all_repos)
+        ) for repo in map(r -> "$(r.name)", all_repos)
     )
 end
 
@@ -54,7 +53,7 @@ function load_stats(file, uuids)
     df = CSV.read(out, DataFrames.DataFrame)
     uuid_to_name = DataFrames.DataFrame(
         package_uuid = collect(keys(uuids)),
-        name = collect(values(uuids))
+        name = collect(values(uuids)),
     )
     df = DataFrames.leftjoin(df, uuid_to_name; on = :package_uuid)
     filter!(df) do row
@@ -82,9 +81,7 @@ function update_download_statistics()
         end
     end
     df = load_stats("package_requests_by_region_by_date", pkg_uuids)
-    new_df = sort!(
-        combine(groupby(df, [:name, :date]), :request_count => sum),
-    )
+    new_df = sort!(combine(groupby(df, [:name, :date]), :request_count => sum))
     data = Dict{String,Dict{String,Any}}()
     for g in groupby(new_df, :name)
         key = replace(g[1, :name], "jump-dev/" => "")
@@ -94,7 +91,7 @@ function update_download_statistics()
         )
     end
     open(joinpath(DATA_DIR, "download_stats.json"), "w") do io
-        write(io, JSON.json(data))
+        return write(io, JSON.json(data))
     end
     return
 end
@@ -127,7 +124,7 @@ function update_package_statistics()
         data[k] = sort!(events, by = x -> x["date"])
     end
     open(joinpath(DATA_DIR, "data.json"), "w") do io
-        write(io, JSON.json(data))
+        return write(io, JSON.json(data))
     end
     return
 end
