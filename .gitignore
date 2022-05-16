@@ -1,2 +1,4 @@
 Manifest.toml
 .DS_Store
+dev.env
+data/package_requests_by_region_by_date.csv.gz

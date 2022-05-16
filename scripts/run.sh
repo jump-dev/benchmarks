@@ -15,6 +15,9 @@ git pull
 ~/julia --project=. scripts/benchmarks.jl --run
 ~/julia --project=. scripts/benchmarks.jl --publish
 
+# Update the repository activity
+~/julia --project=. scripts/repositories.jl --update
+
 # Save and re-upload
 git add .
 git commit -m "Automatic update"
