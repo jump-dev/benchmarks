@@ -45,6 +45,14 @@ const LATENCY_EXAMPLES = [
     "ipopt_clnlbeam.jl" => 500,
     # power_models
     "power_models_opf_acp.jl" => "pglib_opf_case5_pjm",
+    "power_models_opf_acr.jl" => "pglib_opf_case5_pjm",
+    # inverse ising
+    "inverse_ising_expr.jl" => "rise",
+    "inverse_ising_expr.jl" => "logrise",
+    "inverse_ising_expr.jl" => "rple",
+    "inverse_ising_register.jl" => "rise",
+    "inverse_ising_register.jl" => "logrise",
+    "inverse_ising_register.jl" => "rple",
 ]
 
 function _run_latency(filename, arg)
