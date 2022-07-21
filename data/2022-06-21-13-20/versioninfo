@@ -1,8 +1,0 @@
-Julia Version 1.7.2
-Commit bf53498635 (2022-02-06 15:21 UTC)
-Platform Info:
-  OS: macOS (x86_64-apple-darwin19.5.0)
-  CPU: Apple M1
-  WORD_SIZE: 64
-  LIBM: libopenlibm
-  LLVM: libLLVM-12.0.1 (ORCJIT, westmere)
