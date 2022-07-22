@@ -66,6 +66,25 @@ function load_stats(file, uuids)
     return DataFrames.select(df, [:name, :date, :request_count])
 end
 
+function get_historical_downloads(
+    filename::String = joinpath(DATA_DIR, "download_stats.json"),
+)
+    current = JSON.parsefile(filename; use_mmap = false)
+    name = String[]
+    date = Dates.Date[]
+    request_count_sum = Int[]
+    for (pkg, results) in current
+        append!(name, fill("jump-dev/$pkg", length(results["requests"])))
+        append!(date, Dates.Date.(results["dates"]))
+        append!(request_count_sum, results["requests"])
+    end
+    return DataFrames.DataFrame(
+        name = name,
+        date = date,
+        request_count_sum = request_count_sum,
+    )
+end
+
 function update_download_statistics()
     pkg_uuids = Dict{String,String}()
     depot = Pkg.depots1()
@@ -82,8 +101,13 @@ function update_download_statistics()
     end
     df = load_stats("package_requests_by_region_by_date", pkg_uuids)
     new_df = sort!(combine(groupby(df, [:name, :date]), :request_count => sum))
+    new_df.name = String.(new_df.name)
+    current = get_historical_downloads()
+    append!(current, new_df)
+    unique!(current)
+    sort!(current, [:name, :date])
     data = Dict{String,Dict{String,Any}}()
-    for g in groupby(new_df, :name)
+    for g in groupby(current, :name)
         key = replace(g[1, :name], "jump-dev/" => "")
         data[key] = Dict{String,Any}(
             "dates" => string.(collect(g.date)),
