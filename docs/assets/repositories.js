@@ -177,6 +177,27 @@ function last(x) {
         charts.push(chart);
         return
     });
+    load_json("contributor_prs_over_time.json", function (data) {
+        var chart = d3.select('#chart_pr_activity').node();
+        console.log(data);
+        all_prs = {
+            x: data['dates'],
+            y: data['counts'].map(d => d[0] - d[1]),
+            type: 'bar',
+            name: "All Contributors"
+        };
+        new_prs = {
+            x: data['dates'],
+            y: data['counts'].map(d => d[1]),
+            type: 'bar',
+            name: "New Contributors"
+        };
+        new_layout = JSON.parse(JSON.stringify(layout));
+        new_layout['barmode'] = 'stack'
+        Plotly.plot(chart, [new_prs, all_prs], new_layout);
+        charts.push(chart);
+        return
+    });
     load_json("data.json", function (data) {
         function plot_chart(data, key, f, compare = (a, b) => a >= b) {
             var chart = d3.select(key).node();
