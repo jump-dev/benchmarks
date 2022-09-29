@@ -191,9 +191,7 @@ function update_contributor_prs_over_time()
         end
     end
     dates = sort(collect(union(keys(all_prs), keys(new_prs))))
-    counts = [
-        (get(all_prs, date, 0), get(new_prs, date, 0)) for date in dates
-    ]
+    counts = [(get(all_prs, date, 0), get(new_prs, date, 0)) for date in dates]
     open(joinpath(DATA_DIR, "contributor_prs_over_time.json"), "w") do io
         return write(io, JSON.json(Dict("dates" => dates, "counts" => counts)))
     end
