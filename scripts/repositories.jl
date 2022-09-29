@@ -153,6 +153,51 @@ function update_package_statistics()
     return
 end
 
+function update_contributor_prs_over_time()
+    data = JSON.parsefile(joinpath(DATA_DIR, "data.json"))
+    # Compute the number of PRs per month
+    all_prs = Dict{String,Int}()
+    for (pkg, pkg_data) in data
+        for item in pkg_data
+            if item["is_pr"] && item["type"] == "opened"
+                key = String(item["date"][1:7])
+                all_prs[key] = get(all_prs, key, 0) + 1
+            end
+        end
+    end
+    # Find the earliest date of each contributor
+    first_prs = Dict{String,String}()
+    for (pkg, pkg_data) in data
+        for item in pkg_data
+            if item["is_pr"] && item["type"] == "opened"
+                date = get(first_prs, item["user"], "9999-99")
+                key = String(item["date"][1:7])
+                if key < date
+                    first_prs[item["user"]] = key
+                end
+            end
+        end
+    end
+    # Compute the number of PRs by users in their first month
+    new_prs = Dict{String,Int}()
+    for (pkg, pkg_data) in data
+        for item in pkg_data
+            if item["is_pr"] && item["type"] == "opened"
+                key = String(item["date"][1:7])
+                if first_prs[item["user"]] == key
+                    new_prs[key] = get(new_prs, key, 0) + 1
+                end
+            end
+        end
+    end
+    dates = sort(collect(union(keys(all_prs), keys(new_prs))))
+    counts = [(get(all_prs, date, 0), get(new_prs, date, 0)) for date in dates]
+    open(joinpath(DATA_DIR, "contributor_prs_over_time.json"), "w") do io
+        return write(io, JSON.json(Dict("dates" => dates, "counts" => counts)))
+    end
+    return
+end
+
 # This script was used to generate the list of contributors for the JuMP 1.0
 # release. It may be helpful in future.
 function print_all_contributors(; minimum_prs::Int = 1)
@@ -202,4 +247,5 @@ has_arg(arg) = any(isequal(arg), ARGS)
 if has_arg("--update")
     update_download_statistics()
     update_package_statistics()
+    update_contributor_prs_over_time()
 end
