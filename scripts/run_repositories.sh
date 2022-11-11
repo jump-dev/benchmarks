@@ -11,7 +11,7 @@ cd ~/Code/benchmarks
 git pull
 
 # Update the repository activity
-~/julia --project=. scripts/repositories.jl --update
+julia --project=. scripts/repositories.jl --update
 
 # Save and re-upload
 git add .
