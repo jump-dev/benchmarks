@@ -11,7 +11,7 @@ jobs:
     - uses: julia-actions/setup-julia@latest
       with:
         version: '1'
-    - uses: actions/checkout@v1
+    - uses: actions/checkout@v3
     - name: Install
       run: julia --project=. -e 'import Pkg; Pkg.instantiate()'
     - name: Repositories
@@ -23,11 +23,7 @@ jobs:
       run: |
         git config --global user.email "odow@users.noreply.github.com"
         git config --global user.name "Oscar Dowson"
-        git stash
-        git checkout master
-        git stash pop
-        git add .
-        git commit -m "Automatic update script."
+        git commit -am "Automatic update script."
         git push
       env:
         GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
