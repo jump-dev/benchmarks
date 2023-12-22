@@ -1,0 +1,30 @@
+name: update-repositories
+on:
+  schedule:
+    # Every Monday at 01:07 UTC
+    - cron: "07 01 * * MON"
+  workflow_dispatch:
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: julia-actions/setup-julia@latest
+        with:
+          version: '1'
+      - uses: actions/checkout@v1
+      - name: Install
+        run: julia --project=. -e 'import Pkg; Pkg.instantiate()'
+      - name: Repositories
+        env:
+          PERSONAL_ACCESS_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: julia --project=. scripts/repositories.jl --update
+    - name: push
+      if: github.event_name == 'workflow_dispatch' || github.event_name == 'schedule'
+      run: |
+        git config --global user.email "odow@users.noreply.github.com"
+        git config --global user.name "Oscar Dowson"
+        git add .
+        git commit -m "Automatic update script."
+        git push
+      env:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
