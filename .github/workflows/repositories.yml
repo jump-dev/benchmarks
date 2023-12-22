@@ -23,6 +23,9 @@ jobs:
       run: |
         git config --global user.email "odow@users.noreply.github.com"
         git config --global user.name "Oscar Dowson"
+        git stash
+        git checkout master
+        git stash pop
         git add .
         git commit -m "Automatic update script."
         git push
