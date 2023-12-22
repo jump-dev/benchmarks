@@ -35,6 +35,8 @@ const LATENCY_EXAMPLES = [
     "gurobi_lqcp.jl" => 1000,
     "gurobi_lqcp.jl" => 1500,
     "gurobi_lqcp.jl" => 2000,
+    # highs_diet
+    "highs_diet.jl" => nothing,
     # ipopt_jump_2788
     "ipopt_jump_2788.jl" => 200,
     "ipopt_jump_2788.jl" => 400,
