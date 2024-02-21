@@ -44,6 +44,7 @@ end
 function download_stats(file)
     url = "https://julialang-logs.s3.amazonaws.com/public_outputs/current/$(file).csv.gz"
     output = joinpath(dirname(@__DIR__), "data", "$(file).csv.gz")
+    @info "Downloading $url to $output"
     Downloads.download(url, output)
     return output
 end
