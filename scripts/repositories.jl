@@ -44,7 +44,6 @@ end
 function download_stats(file)
     url = "https://julialang-logs.s3.amazonaws.com/public_outputs/current/$(file).csv.gz"
     output = joinpath(dirname(@__DIR__), "data", "$(file).csv.gz")
-    @info "Downloading $url to $output"
     Downloads.download(url, output)
     return output
 end
@@ -86,20 +85,20 @@ function get_historical_downloads(
     )
 end
 
-function update_download_statistics()
+function get_pkg_uuids()
     pkg_uuids = Dict{String,String}()
-    depot = Pkg.depots1()
-    for (root, dirs, files) in walkdir(joinpath(depot, "registries/General"))
-        for dir in dirs
-            file = joinpath(root, dir, "Package.toml")
-            if !isfile(file)
-                continue
-            end
-            data = TOML.parsefile(joinpath(root, dir, "Package.toml"))
-            repo = replace(data["repo"], ".git" => "")
-            pkg_uuids[data["uuid"]] = replace(repo, "https://github.com/" => "")
-        end
+    r = first(Pkg.Registry.reachable_registries())
+    Pkg.Registry.create_name_uuid_mapping!(r)
+    for (uuid, pkg) in r.pkgs
+        Pkg.Registry.init_package_info!(pkg)
+        url = replace(pkg.info.repo, "https://github.com/" => "")
+        pkg_uuids["$uuid"] = replace(url, ".git" => "")
     end
+    return pkg_uuids
+end
+
+function update_download_statistics()
+    pkg_uuids = get_pkg_uuids()
     df = load_stats("package_requests_by_region_by_date", pkg_uuids)
     new_df = sort!(combine(groupby(df, [:name, :date]), :request_count => sum))
     new_df.name = String.(new_df.name)
