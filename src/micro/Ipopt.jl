@@ -6,7 +6,6 @@
 function benchmark_ipopt_fractional_power()
     model = Model(Ipopt.Optimizer)
     set_silent(model)
-    register(model, :sign, 1, sign; autodiff = true)
     @variable(model, x <= 0)
     @variable(model, y >= 0)
     @variable(model, z >= 0)
