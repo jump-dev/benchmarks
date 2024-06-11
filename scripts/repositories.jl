@@ -61,7 +61,7 @@ function load_stats(file, uuids)
                row.client_type == "user" &&
                !ismissing(row.name) &&
                occursin("jump-dev/", row.name) &&
-               row.status == 200
+               row.status in (200, 301, 302)
     end
     return DataFrames.select(df, [:name, :date, :request_count])
 end
