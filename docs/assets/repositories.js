@@ -5,6 +5,19 @@
 
 var d3 = Plotly.d3;
 
+const defaultColors = [
+    'rgb(31, 119, 180)',  // blue
+    'rgb(255, 127, 14)',  // orange
+    'rgb(44, 160, 44)',   // green
+    'rgb(214, 39, 40)',   // red
+    'rgb(148, 103, 189)', // purple
+    'rgb(140, 86, 75)',   // brown
+    'rgb(227, 119, 194)', // pink
+    'rgb(127, 127, 127)', // gray
+    'rgb(188, 189, 34)',  // olive
+    'rgb(23, 190, 207)'   // cyan
+];
+
 function load_json(filename, callback) {
     var xml_request = new XMLHttpRequest();
     xml_request.overrideMimeType("application/json");
@@ -131,6 +144,30 @@ function last(x) {
     return  x[x.length - 2];
 }
 
+function rolling_average(dates, requests, window = 28) {
+    const result = [];
+    let sum = 0;
+    let count = 0;
+    for (let i = 0; i < requests.length; i++) {
+        const currentDate = new Date(dates[i]);
+        const sevenDaysAgo = new Date(currentDate);
+        sevenDaysAgo.setDate(currentDate.getDate() - window);
+        sum = 0;
+        count = 0;
+        for (let j = i; j >= 0; j--) {
+            const date = new Date(dates[j]);
+            if (date < sevenDaysAgo) {
+                break;
+            }
+            sum += requests[j];
+            count++;
+        }
+        const average = count > 0 ? sum / count : 0;
+        result.push(average);
+    }
+    return result;
+}
+
 (function() {
     var charts = [];
     layout = {
@@ -143,7 +180,7 @@ function last(x) {
     }    
     load_json("download_stats.json", function (data) {
         var chart = d3.select('#chart_download_statistics').node();
-        visible = new Set(["JuMP.jl", "MathOptInterface.jl", "MutableArithmetics.jl"]);
+        visible = new Set(["JuMP.jl", "HiGHS.jl"]);
         total_downloads = {}
         Object.keys(data).map(function (key) {
             total_downloads[key] = data[key]["requests"].reduce((a, b) => a+b);
@@ -151,16 +188,35 @@ function last(x) {
         sorted_keys = Object.keys(data).sort(
             (a, b) => total_downloads[a] < total_downloads[b]
         )
-        var series = sorted_keys.map(function (key) {
+        var series = []
+        sorted_keys.map(function (key) {
+            color_index = (series.length / 2) % 10
             object = {
                 x: data[key]["dates"],
-                y: data[key]["requests"],
+                y: rolling_average(data[key]["dates"], data[key]["requests"]),
                 name: key,
+                legendgroup: key,
+                line: {color: defaultColors[color_index]},
             }
             if (!visible.has(key)) {
                 object["visible"] = "legendonly"
             }
-            return object
+            series.push(object);
+            object = {
+                x: data[key]["dates"],
+                y: data[key]["requests"],
+                name: key,
+                mode: "markers",
+                type: "scatter",
+                marker: {opacity: 0.1, color: defaultColors[color_index]},
+                legendgroup: key,
+                showlegend: false,
+            }
+            if (!visible.has(key)) {
+                object["visible"] = "legendonly"
+            }
+            series.push(object);
+            return
         });
         Plotly.plot(
             chart,
@@ -170,7 +226,7 @@ function last(x) {
                 hovermode: 'closest',
                 "yaxis": {
                     "range": ["2021-09-01", to_date(new Date())],
-                    "title": "Download count"
+                    "title": "Daily download count"
                 }
             },
         );
