@@ -255,8 +255,8 @@ function state_of_jump_statistics()
             if Dates.DateTime(item["date"]) < old_date
                 continue
             elseif item["type"] == "opened"
-                push!(contributors, item["user"])
                 if item["is_pr"]
+                    push!(contributors, item["user"])
                     prs_opened += 1
                 else
                     issues_opened += 1
