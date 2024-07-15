@@ -243,24 +243,20 @@ function prs_by_user(user)
 end
 
 function state_of_jump_statistics()
-    df = get_historical_downloads()
     old_date = Dates.today() - Dates.Year(1)
-    n_downloads = sum(df[df.date .>= old_date, :].request_count_sum)
+    # Downloads
+    df = get_historical_downloads()
+    n_downloads = sum(df[df.date.>=old_date, :].request_count_sum)
+    # PRs and issues
     data = JSON.parsefile(joinpath(DATA_DIR, "data.json"))
-    prs_opened = 0
-    issues_opened = 0
-    contributors = Set{String}()
-    for (pkg, items) in data
-        for item in items
-            if Dates.DateTime(item["date"]) < old_date
-                continue
-            elseif item["type"] == "opened"
-                if item["is_pr"]
-                    push!(contributors, item["user"])
-                    prs_opened += 1
-                else
-                    issues_opened += 1
-                end
+    prs_opened, issues_opened, contributors = 0, 0, Set{String}()
+    for (pkg, items) in data, item in items
+        if Dates.DateTime(item["date"]) >= old_date && item["type"] == "opened"
+            if item["is_pr"]
+                push!(contributors, item["user"])
+                prs_opened += 1
+            else
+                issues_opened += 1
             end
         end
     end
