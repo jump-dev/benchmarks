@@ -242,10 +242,42 @@ function prs_by_user(user)
     return prs_by_user
 end
 
+function state_of_jump_statistics()
+    df = get_historical_downloads()
+    old_date = Dates.today() - Dates.Year(1)
+    n_downloads = sum(df[df.date .>= old_date, :].request_count_sum)
+    data = JSON.parsefile(joinpath(DATA_DIR, "data.json"))
+    prs_opened = 0
+    issues_opened = 0
+    contributors = Set{String}()
+    for (pkg, items) in data
+        for item in items
+            if Dates.DateTime(item["date"]) < old_date
+                continue
+            elseif item["type"] == "opened"
+                push!(contributors, item["user"])
+                if item["is_pr"]
+                    prs_opened += 1
+                else
+                    issues_opened += 1
+                end
+            end
+        end
+    end
+    println("""
+    Downloads            : >$n_downloads
+    Pull requests opened : $prs_opened
+    Issues opened        : $issues_opened
+    Unique contributors  : $(length(contributors))
+    """)
+    return
+end
+
 has_arg(arg) = any(isequal(arg), ARGS)
 
 if has_arg("--update")
     update_download_statistics()
     update_package_statistics()
     update_contributor_prs_over_time()
+    state_of_jump_statistics()
 end
