@@ -260,6 +260,16 @@ function state_of_jump_statistics()
             end
         end
     end
+    open(joinpath(DATA_DIR, "summary.json"), "w") do io
+        summary = Dict(
+            "n_downloads" => n_downloads,
+            "prs_opened" => prs_opened,
+            "issues_opened" => issues_opened,
+            "num_contributors" => length(contributors),
+        )
+        write(io, JSON.json(summary))
+        return
+    end
     println("""
     Downloads            : >$n_downloads
     Pull requests opened : $prs_opened

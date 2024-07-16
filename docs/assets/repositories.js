@@ -177,7 +177,12 @@ function rolling_average(dates, requests, window = 28) {
             "range": ["2013-01-01", to_date(new Date())],
             "title": "Count"
         }
-    }    
+    }
+    load_json("summary.json", function (data) {
+        Object.keys(data).map(function (key) {
+            document.getElementById(key).textContent = data[key]
+        });
+    });
     load_json("download_stats.json", function (data) {
         var chart = d3.select('#chart_download_statistics').node();
         visible = new Set(["JuMP.jl", "HiGHS.jl"]);
