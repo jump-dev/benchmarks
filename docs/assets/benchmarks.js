@@ -26,7 +26,7 @@ function load_json(filename, callback) {
 }
 
 function normalize(x, unit_scale) {
-    scale = 1 / unit_scale;
+    scale = 100 / (x[0] * unit_scale);
     // scale = 100 / x[0];
     // scale = 100 / x[x.length - 1];
     return x.map(xi => scale * xi);
@@ -50,7 +50,7 @@ function plot_latency_chart(data, unit_scale, y_label) {
     var layout = {
         margin: {b: 40, t: 20},
         hovermode: 'closest',
-        yaxis: {title: y_label, type: 'log'},
+        yaxis: {title: y_label},
         legend: {"orientation": "h"}
     }
     Plotly.plot(chart, series, layout);
@@ -69,7 +69,7 @@ function plot_chart(data, chart_key, unit_scale, y_label) {
     var layout = {
         margin: {b: 40, t: 20},
         hovermode: 'closest',
-        yaxis: {title: y_label, type: 'log'},
+        yaxis: {title: y_label},
         legend: {"orientation": "h"}
     }
     Plotly.plot(chart, series, layout);
@@ -109,11 +109,11 @@ function plot_summary_chart(data, series_info) {
         return
     });
     load_json("data.json", function (data) {
-        charts.push(plot_latency_chart(data, 1e9, "Wall time (seconds)"));
-        charts.push(plot_chart(data, 'time_min', 1e9, "Wall time (seconds)"));
-        charts.push(plot_chart(data, 'gc_min', 1e9, "Wall time (seconds)"));
+        charts.push(plot_latency_chart(data, 1, "Wall time"));
+        charts.push(plot_chart(data, 'time_min', 1, "Wall time (seconds)"));
+        charts.push(plot_chart(data, 'gc_min', 1, "Wall time (seconds)"));
         charts.push(plot_chart(data, 'allocs', 1, "Total allocations"));
-        charts.push(plot_chart(data, 'memory', 1024 * 1024, "Memory allocated (MiB)"));
+        charts.push(plot_chart(data, 'memory', 1, "Memory allocated (MiB)"));
         return
     });
     /* =========================================================================
