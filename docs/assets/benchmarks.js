@@ -43,7 +43,7 @@ function plot_latency_chart(data, unit_scale, y_label) {
     var series = Object.keys(data).sort().filter(word => word.slice(0, 5) != "bench").map(function (key) {
         return {
             x: to_date(data[key]["dates"]),
-            y: normalize(data[key]['time_min'], unit_scale), 
+            y: normalize(data[key]['time_min'], unit_scale),
             name: key,
         }
     });
@@ -62,7 +62,7 @@ function plot_chart(data, chart_key, unit_scale, y_label) {
     var series = Object.keys(data).sort().filter(word => word.slice(0, 5) == "bench").map(function (key) {
         return {
             x: to_date(data[key]["dates"]),
-            y: normalize(data[key][chart_key], unit_scale), 
+            y: normalize(data[key][chart_key], unit_scale),
             name: key.slice(10, key.length),
         }
     });
@@ -82,9 +82,9 @@ function plot_summary_chart(data, series_info) {
         return {x: to_date(data["dates"]), y: data[item[0]], name: item[1]}
     });
     var layout = {
-        margin: {b: 40, t: 20}, 
+        margin: {b: 40, t: 20},
         hovermode: 'closest',
-        yaxis: {title: 'Index (normalized to 100)', range: [0, 125]},
+        yaxis: {title: 'Index (normalized to 100)'},
         legend: {"orientation": "h"}
     }
     Plotly.plot(chart, series, layout);
