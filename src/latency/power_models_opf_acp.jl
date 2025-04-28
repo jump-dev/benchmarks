@@ -10,7 +10,7 @@ import PowerModels
 function main(case::String)
     data = PowerModels.parse_file(joinpath(@__DIR__, "data", case * ".m"))
     solver = JuMP.optimizer_with_attributes(Ipopt.Optimizer, "tol" => 1e-6)
-    result = PowerModels.run_opf(data, PowerModels.ACPPowerModel, solver)
+    result = PowerModels.solve_opf(data, PowerModels.ACPPowerModel, solver)
     println()
     println(result["termination_status"])
     println(result["primal_status"])
