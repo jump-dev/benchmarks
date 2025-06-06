@@ -162,8 +162,11 @@ function rolling_average(dates, requests, window = 28) {
             sum += requests[j];
             count++;
         }
-        const average = count > 0 ? sum / count : 0;
-        result.push(average);
+        if (count > 0) {
+            result.push(30.42 * sum / count);
+        } else {
+            result.push(null);
+        }
     }
     return result;
 }
@@ -195,7 +198,8 @@ function rolling_average(dates, requests, window = 28) {
         )
         var series = []
         sorted_keys.map(function (key) {
-            color_index = (series.length / 2) % 10
+            // color_index = (series.length / 2) % 10
+            color_index = series.length % 10
             object = {
                 x: data[key]["dates"],
                 y: rolling_average(data[key]["dates"], data[key]["requests"]),
@@ -207,20 +211,20 @@ function rolling_average(dates, requests, window = 28) {
                 object["visible"] = "legendonly"
             }
             series.push(object);
-            object = {
-                x: data[key]["dates"],
-                y: data[key]["requests"],
-                name: key,
-                mode: "markers",
-                type: "scatter",
-                marker: {opacity: 0.1, color: defaultColors[color_index]},
-                legendgroup: key,
-                showlegend: false,
-            }
-            if (!visible.has(key)) {
-                object["visible"] = "legendonly"
-            }
-            series.push(object);
+            // object = {
+            //     x: data[key]["dates"],
+            //     y: data[key]["requests"],
+            //     name: key,
+            //     mode: "markers",
+            //     type: "scatter",
+            //     marker: {opacity: 0.1, color: defaultColors[color_index]},
+            //     legendgroup: key,
+            //     showlegend: false,
+            // }
+            // if (!visible.has(key)) {
+            //     object["visible"] = "legendonly"
+            // }
+            // series.push(object);
             return
         });
         Plotly.plot(
@@ -231,7 +235,7 @@ function rolling_average(dates, requests, window = 28) {
                 hovermode: 'closest',
                 "yaxis": {
                     "range": ["2021-09-01", to_date(new Date())],
-                    "title": "Daily download count"
+                    "title": "Downloads per month"
                 }
             },
         );
