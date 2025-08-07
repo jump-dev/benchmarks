@@ -1,0 +1,13 @@
+Julia Version 1.10.10
+Commit 95f30e51f41 (2025-06-27 09:51 UTC)
+Build Info:
+  Official https://julialang.org/ release
+Platform Info:
+  OS: macOS (arm64-apple-darwin24.0.0)
+  CPU: 8 × Apple M1
+  WORD_SIZE: 64
+  LIBM: libopenlibm
+  LLVM: libLLVM-15.0.7 (ORCJIT, apple-m1)
+Threads: 1 default, 0 interactive, 1 GC (on 4 virtual cores)
+Environment:
+  JULIA_CMD = julia
