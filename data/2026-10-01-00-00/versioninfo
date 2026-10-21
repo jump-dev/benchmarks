@@ -1,0 +1,13 @@
+Julia Version 1.13.2
+Commit 45b6d15e34b (2026-10-14 20:33 UTC)
+Build Info:
+  Official https://julialang.org release
+Platform Info:
+  OS: Linux (x86_64-linux-gnu)
+  CPU: 4 × INTEL(R) XEON(R) PLATINUM 8573C
+  WORD_SIZE: 64
+  LLVM: libLLVM-20.1.8 (ORCJIT, emeraldrapids)
+  GC: Built with stock GC
+Threads: 1 default, 1 interactive, 1 GC (on 4 virtual cores)
+Environment:
+  JULIA_CMD = julia
