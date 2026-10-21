@@ -62,11 +62,9 @@ function _run_latency(filename, arg)
     project = dirname(@__DIR__)
     file = joinpath(@__DIR__, "latency", filename)
     if arg === nothing
-        Base.run(`$julia_cmd --project=$project $file`)
-    else
-        Base.run(`$julia_cmd --project=$project $file $arg`)
+        return Base.run(`$julia_cmd --project=$project $file`)
     end
-    return
+    return Base.run(`$julia_cmd --project=$project $file $arg`)
 end
 
 function _benchmark_suite()
