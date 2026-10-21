@@ -1,0 +1,71 @@
+name: update-benchmarks
+on:
+  schedule:
+    # Every day at 03:17 UTC
+    - cron: "17 03 * * *"
+  workflow_dispatch:
+    inputs:
+      date:
+        description: 'Historical run: use only package versions registered before this date (yyyy-mm-dd). Leave empty to benchmark master.'
+        required: false
+        default: ''
+      julia_version:
+        description: 'Julia version. Older dates may need an older version, like 1.10.'
+        required: false
+        default: '1'
+concurrency:
+  group: benchmarks
+  cancel-in-progress: false
+permissions:
+  contents: write
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    timeout-minutes: 240
+    env:
+      DATE: ${{ inputs.date }}
+    steps:
+    - uses: julia-actions/setup-julia@latest
+      with:
+        version: ${{ inputs.julia_version || '1' }}
+    - uses: actions/checkout@v4
+    - run: echo "${{ secrets.GUROBI_LICENSE }}" > ~/gurobi.lic
+    - name: Checkout master of each package
+      if: inputs.date == ''
+      run: julia --project=. scripts/benchmarks.jl --checkout master
+    - name: Checkout General registry before date
+      if: inputs.date != ''
+      run: |
+        if [[ ! "$DATE" =~ ^[0-9]{4}-[0-9]{2}-[0-9]{2}$ ]]; then
+          echo "Invalid date '$DATE': expected yyyy-mm-dd"
+          exit 1
+        fi
+        # A treeless clone downloads only the commit history. Pkg does not
+        # update a registry with a detached HEAD, so it stays at this commit.
+        git clone --filter=tree:0 https://github.com/JuliaRegistries/General.git ~/.julia/registries/General
+        cd ~/.julia/registries/General
+        git_sha=$(git rev-list -n 1 --first-parent --before="$DATE 00:00" master)
+        echo "Using General registry at $git_sha"
+        git checkout $git_sha
+        cd $GITHUB_WORKSPACE
+        julia --project=. -e 'import Pkg; Pkg.update(); Pkg.status()'
+    - name: Run benchmarks
+      env:
+        JULIA_CMD: julia
+      run: |
+        if [ -z "$DATE" ]; then
+          julia --project=. scripts/benchmarks.jl --run
+        else
+          julia --project=. scripts/benchmarks.jl --historical $DATE
+        fi
+        julia --project=. scripts/benchmarks.jl --publish
+    - name: push
+      run: |
+        git config --global user.email "odow@users.noreply.github.com"
+        git config --global user.name "Oscar Dowson"
+        git add data docs
+        git commit -m "Automatic benchmark update${DATE:+ (historical $DATE)}."
+        git pull --rebase
+        git push
+      env:
+        GITHUB_TOKEN: ${{secrets.GITHUB_TOKEN}}
