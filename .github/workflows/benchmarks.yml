@@ -65,6 +65,10 @@ jobs:
         git config --global user.name "Oscar Dowson"
         git add data docs
         git commit -m "Automatic benchmark update${DATE:+ (historical $DATE)}."
+        # Discard other changes to tracked files (for example, Pkg.add with
+        # rev = "master" adds a [sources] section to Project.toml) so that the
+        # rebase can proceed.
+        git checkout -- .
         git pull --rebase
         git push
       env:
