@@ -4,95 +4,34 @@ Copyright (c) 2022: jump-dev/benchmarks contributors
 Use of this source code is governed by an MIT-style license that can be found
 in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 -->
-
-<!DOCTYPE html>
-<html lang="en-us">
+<!doctype html>
+<html lang="en">
 <head>
-    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1.0" />
-    <title>JuMP-dev performance benchmarks</title>
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/materialize/0.97.7/css/materialize.min.css">
-    <link href="assets/main.css" type="text/css" rel="stylesheet" media="screen,projection" />
-    <script src="https://cdn.plot.ly/plotly-latest.min.js"></script>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>JuMP benchmarks</title>
+<link rel="icon" href="assets/logo.svg" type="image/svg+xml">
+<link rel="stylesheet" href="assets/style.css">
 </head>
 <body>
-    <nav class="nav">
-        <div class="nav-wrapper white">
-            <ul class="right">
-                <li class="active"><a class="julia-blue" href="#">Performance</a></li>
-                <li><a class="julia-blue" href="repositories/index.html">Repo activity</a></li>
-            </ul>
-        </div>
-    </nav>
-    <div class="section no-pad-bot" id="index-banner">
-        <div class="col s12 m12 l8 flow-text container">
-            <a href="https://jump.dev"><img width="300" src="assets/logo.svg"></a>
-            <h2>Performance benchmarks</h2>
-            <p class="small-text">
-                This page tracks peformance benchmarks of the
-                <a href="https://github.com/jump-dev">JuMP-dev</a> ecosystem.
-                We also track our <a href="repositories/index.html">repository activity</a>.
-            </p>
-            <p class="small-text">
-                The list of benchmarks are curated in the
-                <a href="https://github.com/jump-dev/benchmarks">jump-dev/benchmarks</a>
-                repository. New submissions are welcome!
-            </p>
-            <div class="divider"></div>
-            <ol class="small-text">
-                <li><a href="#chart_summary">Normalized metrics</a></li>
-                <li><a href="#chart_latency">Latency examples</a></li>
-                <li><a href="#chart_micro_time_min">Run time</a></li>
-                <li><a href="#chart_micro_gc_min">GC time</a></li>
-                <li><a href="#chart_micro_allocs">Number of allocations</a></li>
-                <li><a href="#chart_micro_memory">Memory allocated</a></li>
-            </ol>
-            <p class="small-text">
-                All plots are normalized to 100 on the oldest benchmark run.
-            </p>
-            <div class="divider"></div>
-            <h4>Normalized metrics</h4>
-            <p class="small-text">
-                A plot of each metric, averaged across all benchmarks. This lets us
-                track overall trends across time.
-            </p>
-            <div id="chart_summary"></div>
-            <div class="divider"></div>
-            <h4>Latency examples</h4>
-            <p class="small-text">
-                This benchmark tracks the wall time in seconds (including
-                compilation latency) of larger end-to-end examples.
-            </p>
-            <div id="chart_latency"></div>
-            <div class="divider"></div>
-            <h4>Run time</h4>
-            <p class="small-text">
-                This benchmark tracks the wall time in seconds.
-            </p>
-            <div id="chart_micro_time_min"></div>
-            <h4>GC time</h4>
-            <p class="small-text">
-                This benchmark tracks the amount of time that is spent in the
-                garbage collector (GC).
-            </p>
-            <div id="chart_micro_gc_min"></div>
-            <h4>Number of allocations</h4>
-            <p class="small-text">
-                This benchmark tracks the total number of allocations.
-            </p>
-            <div id="chart_micro_allocs"></div>
-            <h4>Memory allocated</h4>
-            <p class="small-text">
-                This benchmark tracks the total amount of memory allocated.
-            </p>
-            <div id="chart_micro_memory"></div>
-            <div class="divider"></div>
-            <p class="subtitle">
-                Made with <a href="http://materializecss.com">Materialize</a>
-            </p>
-        </div>
-    </div>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/materialize/1.0.0/js/materialize.min.js"></script>
-    <script src="assets/benchmarks.js" type="text/javascript"></script>
+<header class="topbar">
+<div class="container">
+  <a class="brand" href="#/"><img class="logo" src="assets/logo.svg" alt="">benchmarks</a>
+  <nav>
+    <a href="#/">Dashboard</a>
+    <a href="#/runs">Runs</a>
+    <a href="#/benchmarks">Benchmarks</a>
+    <a href="repositories/index.html">Repo activity</a>
+  </nav>
+</div>
+</header>
+<main id="app" class="container"><p class="muted">Loading…</p></main>
+<footer class="muted"><div class="container">
+  The benchmarks are curated in <a href="https://github.com/jump-dev/benchmarks" target="_blank" rel="noopener">jump-dev/benchmarks</a>; new submissions are welcome.
+  Each run installs the newest package versions that were registered on its date and measures them on the same machine.
+  Data in <code>docs/data/</code>.
+</div></footer>
+<script src="assets/chart.js"></script>
+<script src="assets/app.js"></script>
 </body>
 </html>

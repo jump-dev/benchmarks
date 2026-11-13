@@ -1,13 +1,15 @@
-Julia Version 1.13.2
-Commit 45b6d15e34b (2026-10-14 20:33 UTC)
+Julia Version 1.10.12
+Commit d93beab124c (2026-08-15 10:29 UTC)
 Build Info:
-  Official https://julialang.org release
+  Official https://julialang.org/ release
 Platform Info:
-  OS: Linux (x86_64-linux-gnu)
-  CPU: 4 × Intel(R) Xeon(R) Platinum 8370C CPU @ 2.80GHz
+  OS: macOS (arm64-apple-darwin25.5.0)
+  CPU: 8 × Apple M1
   WORD_SIZE: 64
-  LLVM: libLLVM-20.1.8 (ORCJIT, icelake-server)
-  GC: Built with stock GC
-Threads: 1 default, 1 interactive, 1 GC (on 4 virtual cores)
+  LIBM: libopenlibm
+  LLVM: libLLVM-15.0.7 (ORCJIT, apple-m1)
+Threads: 1 default, 0 interactive, 1 GC (on 4 virtual cores)
 Environment:
-  JULIA_CMD = julia
+  JULIA_CMD = /Users/oscardowson/.julia/juliaup/julia-1.10.12+0.aarch64.apple.darwin14/Julia-1.10.app/Contents/Resources/julia/bin/julia
+  JULIA_DEPOT_PATH = /Users/oscardowson/.julia-benchmarks
+  JULIA_NUM_THREADS = 1

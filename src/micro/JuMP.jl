@@ -334,7 +334,9 @@ function benchmark_nlexpr_model_nested_problems()
     model = Model(Ipopt.Optimizer)
     set_silent(model)
     @variable(model, x[1:2] >= 0)
-    @operator(model, f_V, 2, V, ∇V, ∇²V)
+    # Use the function instead of `@operator` so that this file still loads
+    # on versions of JuMP in which the macro does not exist.
+    f_V = add_nonlinear_operator(model, 2, V, ∇V, ∇²V; name = :f_V)
     @objective(model, Min, x[1]^2 + x[2]^2 + f_V(x[1], x[2]))
     optimize!(model)
     solution_summary(model)

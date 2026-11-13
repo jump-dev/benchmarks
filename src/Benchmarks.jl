@@ -9,6 +9,7 @@ using JuMP
 import Ipopt
 
 import BenchmarkTools
+import Dates
 import InteractiveUtils
 import JSON
 import LinearAlgebra
@@ -124,7 +125,18 @@ function _run_benchmarks(directory)
     param_filename = joinpath(DATA_DIR, "benchmark_params.json")
     params = BenchmarkTools.load(param_filename)[1]
     BenchmarkTools.loadparams!(suite, params, :evals, :samples)
-    results = BenchmarkTools.run(suite)
+    # Run each benchmark separately so that one failure (for example, a
+    # benchmark that uses an API that did not exist in a historical version of
+    # JuMP) does not prevent the other results from being recorded.
+    results = BenchmarkTools.BenchmarkGroup()
+    for name in sort!(collect(keys(suite)))
+        @info "Running benchmark: $name"
+        try
+            results[name] = BenchmarkTools.run(suite[name])
+        catch err
+            @warn "Benchmark failed: $name" err
+        end
+    end
     # We could use BenchmarkTools.save(filename, results), but this generates
     # quite large files. Create a smaller report for simplicity.
     report = _generate_report(results)
@@ -151,78 +163,171 @@ end
 ###
 ### publish
 ###
+###
+### The site in docs/ is static and reads three kinds of file, all written by
+### publish() from the raw results in data/:
+###
+###   docs/data/index.json            every run with its date, Julia version,
+###                                   key package versions and benchmark count
+###   docs/data/runs/<run>.json       one run: versioninfo, every package
+###                                   version in its Manifest, and its results
+###   docs/data/benchmarks.json       one entry per benchmark with the values
+###                                   of each metric across the runs
+###
 
-function _rebuild_data_json()
-    data = Dict{String,Any}()
-    for (root, _, _) in walkdir(DATA_DIR)
-        if root == DATA_DIR
+const DOCS_DATA_DIR = joinpath(dirname(@__DIR__), "docs", "data")
+
+# The packages whose versions are listed in index.json, and so on the Runs
+# page. The rest are in each run's own file.
+const KEY_PACKAGES = [
+    "JuMP",
+    "MathOptInterface",
+    "Ipopt",
+    "HiGHS",
+    "Gurobi",
+    "PowerModels",
+    "BenchmarkTools",
+]
+
+# The `Manifest` file of a run is the output of `Pkg.status(; mode =
+# PKGMODE_MANIFEST)`, one package per line:
+#     [6e4b80f9] BenchmarkTools v1.8.0
+# possibly preceded by a status marker (⌃, ⌅, …) and followed by a git source:
+#     [4076af6c] JuMP v1.25.0 `https://github.com/jump-dev/JuMP.jl.git#master`
+function _parse_manifest(filename)
+    packages = Dict{String,String}()
+    isfile(filename) || return packages
+    for line in eachline(filename)
+        m = match(r"\[([0-9a-f]{8})\]\s+(\S+)\s+(.*)$", line)
+        m === nothing && continue
+        packages[m[2]] = String(strip(m[3]))
+    end
+    return packages
+end
+
+function _julia_version(filename)
+    isfile(filename) || return ""
+    for line in eachline(filename)
+        m = match(r"^Julia Version (\S+)", line)
+        m === nothing || return String(m[1])
+    end
+    return ""
+end
+
+# Where a benchmark is defined, relative to the repository root, for the link on
+# its page. Micro-benchmarks are functions in src/micro; latency benchmarks are
+# the scripts in src/latency, named "<file> <argument>".
+function _benchmark_source(name)
+    if startswith(name, "benchmark_")
+        dir = joinpath(dirname(@__DIR__), "src", "micro")
+        files = filter(f -> endswith(f, ".jl"), readdir(dir))
+        sources = Dict(f => read(joinpath(dir, f), String) for f in files)
+        for file in files
+            if occursin("function $name(", sources[file])
+                return "micro", "src/micro/$file"
+            end
+        end
+        # Some benchmarks are generated with @eval from a name like
+        # "benchmark_matrix_$(s)_product_$(N)", so look for the file that
+        # contains the longest prefix of the name.
+        for n in length(name):-1:(length("benchmark_") + 4)
+            for file in files
+                if occursin(name[1:n], sources[file])
+                    return "micro", "src/micro/$file"
+                end
+            end
+        end
+        return "micro", "src/micro"
+    end
+    file = first(split(name, ' '))
+    return "latency", "src/latency/$file"
+end
+
+# A run directory is "yyyy-mm-dd-HH-MM".
+_run_date(run) = replace(run, r"^(\d{4}-\d{2}-\d{2})-(\d{2})-(\d{2})$" => s"\1T\2:\3")
+
+function _read_runs()
+    runs = Any[]
+    for run in sort!(readdir(DATA_DIR))
+        root = joinpath(DATA_DIR, run)
+        isdir(root) || continue
+        filename = joinpath(root, "results.json")
+        if !isfile(filename)
+            @warn("Skipping $run: no results.json (failed run?)")
             continue
         end
-        date = String(last(split(root, '/')))
-        data[date] = JSON.parsefile(joinpath(root, "results.json"))
+        push!(
+            runs,
+            Dict{String,Any}(
+                "id" => run,
+                "date" => _run_date(run),
+                "julia" => _julia_version(joinpath(root, "versioninfo")),
+                "versioninfo" =>
+                    isfile(joinpath(root, "versioninfo")) ?
+                    read(joinpath(root, "versioninfo"), String) : "",
+                "packages" => _parse_manifest(joinpath(root, "Manifest")),
+                "results" => JSON.parsefile(filename),
+            ),
+        )
     end
-    dates = sort(collect(keys(data)))
-    output = Dict{String,Any}()
-    for date in dates
-        for (benchmark, result) in data[date]
-            if !haskey(output, benchmark)
-                output[benchmark] = Dict{String,Any}(
-                    "dates" => String[],
-                    "memory" => Int[],
-                    "allocs" => Int[],
-                    "gc_min" => Float64[],
-                    "gc_median" => Float64[],
-                    "time_min" => Float64[],
-                    "time_median" => Float64[],
-                )
-            end
-            y = output[benchmark]
-            push!(y["dates"], date)
-            for (key, value) in result
-                push!(y[key], value)
-            end
-        end
-    end
-    open(joinpath(dirname(@__DIR__), "docs", "data.json"), "w") do io
-        return write(io, JSON.json(output))
-    end
-    return dates, output
+    return runs
 end
 
-function _normalized_data(dates, data)
-    output = Dict{String,Any}("dates" => dates)
-    dates_to_index = Dict(d => i for (i, d) in enumerate(dates))
-    # For now, only compute summary of the times
-    fields =
-        ("time_min", "time_median", "memory", "allocs", "gc_min", "gc_median")
-    for key in fields
-        output[key] = _normalized_data(dates_to_index, data, key)
-    end
-    open(joinpath(dirname(@__DIR__), "docs", "summary_data.json"), "w") do io
-        return write(io, JSON.json(output))
-    end
-    return output
-end
+const METRIC_KEYS =
+    ("memory", "allocs", "gc_min", "gc_median", "time_min", "time_median")
 
-function _normalized_data(dates_to_index, data, key)
-    outputs = [Float64[] for _ in 1:length(dates_to_index)]
-    for (_, result) in data
-        if any(iszero, result[key])
-            continue  # skip normalizing for tests with 0 allocations, etc.
-        end
-        scale_factor = 100 / result[key][1]
-        for (i, date) in enumerate(result["dates"])
-            index = dates_to_index[date]
-            new_value = scale_factor * result[key][i]
-            push!(outputs[index], new_value)
-        end
+function _write_json(filename, data)
+    mkpath(dirname(filename))
+    open(filename, "w") do io
+        return write(io, JSON.json(data))
     end
-    return [Statistics.mean(o) for o in outputs]
+    return
 end
 
 function publish()
-    dates, data = _rebuild_data_json()
-    _normalized_data(dates, data)
+    runs = _read_runs()
+    # docs/data/runs/<run>.json, removing the files of runs that no longer
+    # exist in data/.
+    rm(joinpath(DOCS_DATA_DIR, "runs"); force = true, recursive = true)
+    for run in runs
+        _write_json(joinpath(DOCS_DATA_DIR, "runs", "$(run["id"]).json"), run)
+    end
+    # docs/data/index.json
+    index = Dict{String,Any}(
+        "generated" => Dates.format(Dates.now(Dates.UTC), "yyyy-mm-ddTHH:MM:SSZ"),
+        "runs" => [
+            Dict{String,Any}(
+                "id" => run["id"],
+                "date" => run["date"],
+                "julia" => run["julia"],
+                "n_benchmarks" => length(run["results"]),
+                "packages" => Dict(
+                    k => run["packages"][k] for
+                    k in KEY_PACKAGES if haskey(run["packages"], k)
+                ),
+            ) for run in runs
+        ],
+    )
+    _write_json(joinpath(DOCS_DATA_DIR, "index.json"), index)
+    # docs/data/benchmarks.json
+    benchmarks = Dict{String,Any}()
+    for run in runs, (name, result) in run["results"]
+        if !haskey(benchmarks, name)
+            group, source = _benchmark_source(name)
+            benchmarks[name] = Dict{String,Any}(
+                "group" => group,
+                "source" => source,
+                "runs" => String[],
+                (k => Any[] for k in METRIC_KEYS)...,
+            )
+        end
+        b = benchmarks[name]
+        push!(b["runs"], run["id"])
+        for k in METRIC_KEYS
+            push!(b[k], get(result, k, nothing))
+        end
+    end
+    _write_json(joinpath(DOCS_DATA_DIR, "benchmarks.json"), benchmarks)
     return
 end
 
