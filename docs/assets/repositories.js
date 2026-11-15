@@ -3,334 +3,287 @@
 // Use of this source code is governed by an MIT-style license that can be found
 // in the LICENSE.md file or at https://opensource.org/licenses/MIT.
 
-var d3 = Plotly.d3;
+// The repository activity page, docs/repositories/index.html. The charts are
+// drawn with Plotly, themed from the colours in style.css.
+//
+// Data (written by `scripts/repositories.jl --update`):
+//   summary.json                    {element id: number}
+//   download_stats.json             {package: {dates, requests}}
+//   contributor_prs_over_time.json  {dates, counts: [[all, new], ...]}
+//   data.json                       {package: [{is_pr, date, type, user}]},
+//                                   with type "opened" or "closed"
 
-const defaultColors = [
-    'rgb(31, 119, 180)',  // blue
-    'rgb(255, 127, 14)',  // orange
-    'rgb(44, 160, 44)',   // green
-    'rgb(214, 39, 40)',   // red
-    'rgb(148, 103, 189)', // purple
-    'rgb(140, 86, 75)',   // brown
-    'rgb(227, 119, 194)', // pink
-    'rgb(127, 127, 127)', // gray
-    'rgb(188, 189, 34)',  // olive
-    'rgb(23, 190, 207)'   // cyan
-];
+"use strict";
 
-function load_json(filename, callback) {
-    var xml_request = new XMLHttpRequest();
-    xml_request.overrideMimeType("application/json");
-    xml_request.open("GET", filename, true);
-    // xml_request.setRequestHeader("Access-Control-Allow-Origin","*")
-    xml_request.onreadystatechange = function() {
-        if (xml_request.readyState == 4) {
-            if (xml_request.status == "200" || xml_request.status == "0") {
-                // Required use of an anonymous callback as .open will NOT
-                // return a value but simply returns undefined in asynchronous
-                // mode.
-                callback(JSON.parse(xml_request.responseText));
-            } else {
-                console.log("error getting " + filename);
-                console.log(xml_request);
-            }
-        }
-    };
-    xml_request.send(null);
+// The series shown when the page loads. The others are in the legend.
+const VISIBLE_DOWNLOADS = new Set(["JuMP.jl", "HiGHS.jl"]);
+const VISIBLE_PACKAGES = new Set(["JuMP.jl", "MathOptInterface.jl"]);
+const VISIBLE_USERS = new Set(["odow", "mlubin", "blegat"]);
+
+// The window, in days, of the moving average of downloads.
+const DOWNLOAD_WINDOW = 28;
+
+// The initial y-axis range of the downloads chart.
+const DOWNLOAD_RANGE = [0, 100_000];
+
+// Colours after the four series colours of style.css, for the charts with
+// many series. They are mid-tones, so they read on both surfaces.
+const EXTRA_COLORS = ["#9558b2", "#cb3c33", "#1a9aa8", "#8c564b"];
+
+// ---------------------------------------------------------------- utilities
+
+async function loadJSON(file) {
+  const response = await fetch(file);
+  if (!response.ok) throw new Error(`could not load ${file}: ${response.status}`);
+  return response.json();
 }
 
-function to_date(d) {
-    function two_digit(x) {
-        if (x < 10) {
-            return "0" + x
-        } else {
-            return x
-        }
+// Dates are YYYY-MM-DD strings, handled in UTC throughout.
+function isoDate(d) {
+  return d.toISOString().slice(0, 10);
+}
+
+function nextDay(date) {
+  const d = new Date(date + "T00:00:00Z");
+  d.setUTCDate(d.getUTCDate() + 1);
+  return isoDate(d);
+}
+
+const TODAY = isoDate(new Date());
+
+// A step series with a value on every day, so that the stacked charts line up.
+class DailySeries {
+  constructor() {
+    this.x = [];
+    this.y = [];
+  }
+  // Set the value from `date` onwards, carrying the previous value forward
+  // over any gap.
+  set(date, value) {
+    const n = this.x.length;
+    if (n > 0 && this.x[n - 1] === date) {
+      this.y[n - 1] = value;
+      return;
     }
-    return d.getFullYear() + "-" + two_digit(d.getMonth() + 1) + "-" + two_digit(d.getDate());
-}
-
-function flip_data_to_user(data) {
-    var new_data = {};
-    Object.keys(data).map(function (key) {
-        x = data[key];
-        if (x.length > 0) {
-            x.map(function (item) {
-                tmp = Object.assign({}, item);
-                user = tmp["user"];
-                tmp["user"] = key;
-                if (!(user in new_data)) {
-                    new_data[user] = [];
-                }
-                new_data[user].push(tmp);
-                return
-            });
-        }
-        return
-    });
-    Object.keys(new_data).map(function (key) {
-        new_data[key].sort((a, b) => a["date"] >= b["date"]);
-    })
-    return new_data;
-}
-
-function add_new_dates(x, y, new_date, new_value) {
-    if (x.length == 0) {
-        x.push(new_date);
-        y.push(new_value);
-    } else if (x[x.length-1] == new_date) {
-        y[y.length-1] = new_value;  // update in-place
-    } else {
-        var date = new Date(x[x.length-1]);
-        new_date = new Date(new_date);
-        while (date < new_date) {
-            date.setDate(date.getDate() + 1);
-            x.push(to_date(date));
-            y.push(y[y.length-1]);
-        }
-        x.push(to_date(new_date));
-        y.push(new_value);
+    if (n > 0) {
+      for (let d = nextDay(this.x[n - 1]); d < date; d = nextDay(d)) {
+        this.x.push(d);
+        this.y.push(this.y[n - 1]);
+      }
     }
-    return
+    this.x.push(date);
+    this.y.push(value);
+  }
 }
 
-function count_of_opened_issues(data, key, is_pr, is_cumulative, visible) {
-    i = 0;
-    x = [];
-    y = [];
-    data[key].map(function(item) {
-        if (item["is_pr"] != is_pr) {
-            return
-        } else if (item["type"] == "opened") {
-            i++;
-            add_new_dates(x, y, item["date"].slice(0, 10), i);
-        } else if (!is_cumulative) {
-            i--;
-            add_new_dates(x, y, item["date"].slice(0, 10), i);
-        }
-    });
-    add_new_dates(x, y, to_date(new Date()), i);
-    object = {name: key, "x": x, "y": y, stackgroup: "one"}
-    if (!visible.has(key)) {
-        object["visible"] = "legendonly";
-    }
-    return object
+function legendOnly(trace, visible) {
+  if (!visible.has(trace.name)) trace.visible = "legendonly";
+  return trace;
 }
 
-function count_of_users(data, key, is_pr, visible) {
-    names = new Set();
-    i = 0;
-    x = [];
-    y = [];
-    data[key].map(function(item) {
-        if (item["is_pr"] != is_pr || item["type"] == "closed") {
-            return
-        } else if (names.has(item["user"])) {
-            return
-        }
-        names.add(item["user"]);
-        i++;
-        add_new_dates(x, y, item["date"].slice(0, 10), i);
-    });
-    add_new_dates(x, y, to_date(new Date()), i);
-    object = {name: key, "x": x, "y": y}
-    if (!visible.has(key)) {
-        object["visible"] = "legendonly";
-    }
-    return object
+// Keys ordered by a numeric score, largest first, so the legend and the
+// colours start with the busiest packages and users.
+function byDescending(keys, score) {
+  return [...keys].sort((a, b) => score(b) - score(a) || a.localeCompare(b));
 }
 
-function last(x) {
-    return  x[x.length - 2];
+// ---------------------------------------------------------------- series
+
+// The number of issues (or pull requests) of `events` that are open on each
+// day or, if `cumulative`, that have been opened by each day.
+function countOpened(name, events, isPR, cumulative) {
+  const series = new DailySeries();
+  let n = 0;
+  for (const e of events) {
+    if (e.is_pr !== isPR) continue;
+    if (e.type === "opened") n++;
+    else if (!cumulative) n--;
+    else continue;
+    series.set(e.date.slice(0, 10), n);
+  }
+  series.set(TODAY, n);
+  return { name, x: series.x, y: series.y, stackgroup: "one", line: { width: 1 } };
 }
 
-function rolling_average(dates, requests, window = 28) {
-    const result = [];
-    let sum = 0;
-    let count = 0;
-    for (let i = 0; i < requests.length; i++) {
-        const currentDate = new Date(dates[i]);
-        const sevenDaysAgo = new Date(currentDate);
-        sevenDaysAgo.setDate(currentDate.getDate() - window);
-        sum = 0;
-        count = 0;
-        for (let j = i; j >= 0; j--) {
-            const date = new Date(dates[j]);
-            if (date < sevenDaysAgo) {
-                break;
-            }
-            sum += requests[j];
-            count++;
-        }
-        if (count > 0) {
-            result.push(30.42 * sum / count);
-        } else {
-            result.push(null);
-        }
-    }
-    return result;
+// The number of unique users that have opened an issue (or pull request) in
+// `events` by each day.
+function countUsers(name, events, isPR) {
+  const series = new DailySeries();
+  const users = new Set();
+  for (const e of events) {
+    if (e.is_pr !== isPR || e.type !== "opened" || users.has(e.user)) continue;
+    users.add(e.user);
+    series.set(e.date.slice(0, 10), users.size);
+  }
+  series.set(TODAY, users.size);
+  return { name, x: series.x, y: series.y, line: { width: 2 } };
 }
 
-(function() {
-    var charts = [];
-    layout = {
-        margin: {b: 30, t: 20},
-        hovermode: 'closest',
-        "yaxis": {
-            "range": ["2013-01-01", to_date(new Date())],
-            "title": "Count"
-        }
-    }
-    load_json("summary.json", function (data) {
-        Object.keys(data).map(function (key) {
-            document.getElementById(key).textContent = data[key]
-        });
-    });
-    load_json("download_stats.json", function (data) {
-        var chart = d3.select('#chart_download_statistics').node();
-        visible = new Set(["JuMP.jl", "HiGHS.jl"]);
-        total_downloads = {}
-        Object.keys(data).map(function (key) {
-            total_downloads[key] = data[key]["requests"].reduce((a, b) => a+b);
-        })
-        sorted_keys = Object.keys(data).sort(
-            (a, b) => total_downloads[a] < total_downloads[b]
-        )
-        var series = []
-        sorted_keys.map(function (key) {
-            // color_index = (series.length / 2) % 10
-            color_index = series.length % 10
-            object = {
-                x: data[key]["dates"],
-                y: rolling_average(data[key]["dates"], data[key]["requests"]),
-                name: key,
-                legendgroup: key,
-                line: {color: defaultColors[color_index]},
-            }
-            if (!visible.has(key)) {
-                object["visible"] = "legendonly"
-            }
-            series.push(object);
-            // object = {
-            //     x: data[key]["dates"],
-            //     y: data[key]["requests"],
-            //     name: key,
-            //     mode: "markers",
-            //     type: "scatter",
-            //     marker: {opacity: 0.1, color: defaultColors[color_index]},
-            //     legendgroup: key,
-            //     showlegend: false,
-            // }
-            // if (!visible.has(key)) {
-            //     object["visible"] = "legendonly"
-            // }
-            // series.push(object);
-            return
-        });
-        Plotly.plot(
-            chart,
-            series,
-            {
-                margin: {b: 40, t: 20},
-                hovermode: 'closest',
-                "yaxis": {
-                    "range": ["2021-09-01", to_date(new Date())],
-                    "title": "Downloads per month"
-                }
-            },
-        );
-        charts.push(chart);
-        return
-    });
-    load_json("contributor_prs_over_time.json", function (data) {
-        var chart = d3.select('#chart_pr_activity').node();
-        console.log(data);
-        all_prs = {
-            x: data['dates'],
-            y: data['counts'].map(d => d[0] - d[1]),
-            type: 'bar',
-            name: "All Contributors"
-        };
-        new_prs = {
-            x: data['dates'],
-            y: data['counts'].map(d => d[1]),
-            type: 'bar',
-            name: "New Contributors"
-        };
-        new_layout = JSON.parse(JSON.stringify(layout));
-        new_layout['barmode'] = 'stack'
-        Plotly.plot(chart, [new_prs, all_prs], new_layout);
-        charts.push(chart);
-        return
-    });
-    load_json("data.json", function (data) {
-        function plot_chart(data, key, f, compare = (a, b) => a >= b) {
-            var chart = d3.select(key).node();
-            var series = Object.keys(data).sort(compare).map(f);
-            Plotly.plot(chart, series, layout);
-            charts.push(chart);
-            return
-        }
-        pkgs = new Set(["JuMP.jl", "MathOptInterface.jl"]);
-        plot_chart(
-            data,
-            "#chart_count_open_issues", 
-            key => count_of_opened_issues(data, key, false, false, pkgs),
-            (a, b) => data[a].length > data[b].length,
-        );
-        plot_chart(
-            data,
-            "#chart_count_open_pull_requests", 
-            key => count_of_opened_issues(data, key, true, false, pkgs),
-            (a, b) => data[a].length > data[b].length,
-        );
-        plot_chart(
-            data,
-            "#chart_cumulative_count_open_issues", 
-            key => count_of_opened_issues(data, key, false, true, pkgs),
-            (a, b) => data[a].length > data[b].length,
-        );
-        plot_chart(
-            data,
-            "#chart_cumulative_count_open_pull_requests", 
-            key => count_of_opened_issues(data, key, true, true, pkgs),
-            (a, b) => data[a].length > data[b].length,
-        );
-        plot_chart(
-            data,
-            "#chart_count_users_open_issues", 
-            key => count_of_users(data, key, false, pkgs),
-            (a, b) => data[a].length < data[b].length,
-        );
-        plot_chart(
-            data,
-            "#chart_count_users_open_pull_requests", 
-            key => count_of_users(data, key, true, pkgs),
-            (a, b) => data[a].length < data[b].length,
-        );
-        user_data = flip_data_to_user(data);
-        users = new Set(["odow", "mlubin", "blegat"]);
-        plot_chart(
-            user_data,
-            "#chart_unique_users_open_issues", 
-            key => count_of_opened_issues(user_data, key, false, true, users),
-            (a, b) => user_data[a].length > user_data[b].length,
-        );
-        plot_chart(
-            user_data,
-            "#chart_unique_users_open_pull_requests", 
-            key => count_of_opened_issues(user_data, key, true, true, users),
-            (a, b) => user_data[a].length > user_data[b].length,
-        );
-    });
-    /* =========================================================================
-        Resizing stuff.
-    ========================================================================= */
-    window.onresize = function() {
-        charts.map(function(chart){
-            if (window.getComputedStyle(chart).display == "block") {
-                Plotly.Plots.resize(chart)
-            }
-        })
-    };
-})();
+// {package: events} to {user: events}, in date order.
+function eventsByUser(data) {
+  const out = {};
+  for (const events of Object.values(data)) {
+    for (const e of events) (out[e.user] ??= []).push(e);
+  }
+  for (const events of Object.values(out)) {
+    events.sort((a, b) => a.date.localeCompare(b.date));
+  }
+  return out;
+}
+
+// The mean daily downloads over the trailing window, scaled to a month.
+function rollingAverage(dates, requests) {
+  const ms = (d) => Date.parse(d + "T00:00:00Z");
+  const window = DOWNLOAD_WINDOW * 86400e3;
+  const result = [];
+  let start = 0;
+  let sum = 0;
+  for (let i = 0; i < requests.length; i++) {
+    sum += requests[i];
+    while (ms(dates[start]) < ms(dates[i]) - window) sum -= requests[start++];
+    result.push((30.42 * sum) / (i - start + 1));
+  }
+  return result;
+}
+
+// ---------------------------------------------------------------- theme
+
+function cssVar(name) {
+  return getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+}
+
+// The Plotly layout of every chart, from the colours of the current theme.
+function themeLayout() {
+  const axis = {
+    gridcolor: cssVar("--grid"),
+    linecolor: cssVar("--baseline"),
+    zerolinecolor: cssVar("--baseline"),
+    tickfont: { color: cssVar("--text-2") },
+    automargin: true,
+  };
+  return {
+    paper_bgcolor: "rgba(0,0,0,0)",
+    plot_bgcolor: "rgba(0,0,0,0)",
+    font: { family: getComputedStyle(document.body).fontFamily, size: 12, color: cssVar("--text-2") },
+    colorway: [1, 2, 3, 4].map((i) => cssVar(`--series-${i}`)).concat(EXTRA_COLORS),
+    margin: { l: 8, r: 8, t: 8, b: 8 },
+    hovermode: "x unified",
+    hoverlabel: {
+      bgcolor: cssVar("--surface"),
+      bordercolor: cssVar("--border"),
+      font: { color: cssVar("--text") },
+    },
+    // Plotly reverses the legend of stacked charts. Keep the order of the
+    // traces, busiest first, on every chart.
+    legend: { font: { color: cssVar("--text-2") }, itemdoubleclick: "toggleothers", traceorder: "normal" },
+    xaxis: { ...axis, type: "date" },
+    yaxis: { ...axis, rangemode: "tozero" },
+  };
+}
+
+const charts = [];
+
+function merged(layout) {
+  const theme = themeLayout();
+  return {
+    ...theme,
+    ...layout,
+    legend: { ...theme.legend, ...layout.legend },
+    xaxis: { ...theme.xaxis, ...layout.xaxis },
+    yaxis: { ...theme.yaxis, ...layout.yaxis },
+  };
+}
+
+function plot(id, traces, layout = {}) {
+  const div = document.getElementById(id);
+  charts.push({ div, layout });
+  return Plotly.newPlot(div, traces, merged(layout), {
+    responsive: true,
+    displaylogo: false,
+    modeBarButtonsToRemove: ["select2d", "lasso2d"],
+  });
+}
+
+// Redraw with the new colours when the colour scheme changes, keeping the
+// series that the reader has shown or hidden and the current zoom.
+window.matchMedia("(prefers-color-scheme: dark)").addEventListener("change", () => {
+  for (const { div, layout } of charts) {
+    const next = merged(layout);
+    next.xaxis.range = div.layout.xaxis.range;
+    next.yaxis.range = div.layout.yaxis.range;
+    Plotly.react(div, div.data, next);
+  }
+});
+
+// ---------------------------------------------------------------- charts
+
+function yTitle(text) {
+  return { yaxis: { title: { text } } };
+}
+
+async function summary() {
+  const data = await loadJSON("summary.json");
+  for (const [id, value] of Object.entries(data)) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = Number(value).toLocaleString("en-US");
+  }
+}
+
+async function downloads() {
+  const data = await loadJSON("download_stats.json");
+  const total = {};
+  for (const [name, d] of Object.entries(data)) total[name] = d.requests.reduce((a, b) => a + b, 0);
+  const traces = byDescending(Object.keys(data), (k) => total[k]).map((name) =>
+    legendOnly(
+      { name, x: data[name].dates, y: rollingAverage(data[name].dates, data[name].requests), line: { width: 2 } },
+      VISIBLE_DOWNLOADS,
+    ),
+  );
+  await plot("chart_download_statistics", traces, {
+    yaxis: { title: { text: "Downloads per month" }, range: DOWNLOAD_RANGE },
+  });
+}
+
+async function prActivity() {
+  const data = await loadJSON("contributor_prs_over_time.json");
+  const traces = [
+    { name: "New contributors", type: "bar", x: data.dates, y: data.counts.map((c) => c[1]) },
+    { name: "Existing contributors", type: "bar", x: data.dates, y: data.counts.map((c) => c[0] - c[1]) },
+  ];
+  await plot("chart_pr_activity", traces, {
+    ...yTitle("Pull requests opened"),
+    barmode: "stack",
+    bargap: 0.15,
+    legend: { orientation: "h", x: 0, y: 1.08 },
+  });
+}
+
+async function activity() {
+  const data = await loadJSON("data.json");
+  const users = eventsByUser(data);
+  const packages = byDescending(Object.keys(data), (k) => data[k].length);
+  const people = byDescending(Object.keys(users), (k) => users[k].length);
+  const perPackage = [
+    ["chart_count_open_issues", "Open issues", (k) => countOpened(k, data[k], false, false)],
+    ["chart_count_open_pull_requests", "Open pull requests", (k) => countOpened(k, data[k], true, false)],
+    ["chart_cumulative_count_open_issues", "Issues opened", (k) => countOpened(k, data[k], false, true)],
+    ["chart_cumulative_count_open_pull_requests", "Pull requests opened", (k) => countOpened(k, data[k], true, true)],
+    ["chart_count_users_open_issues", "Users", (k) => countUsers(k, data[k], false)],
+    ["chart_count_users_open_pull_requests", "Users", (k) => countUsers(k, data[k], true)],
+  ];
+  for (const [id, title, series] of perPackage) {
+    await plot(id, packages.map((k) => legendOnly(series(k), VISIBLE_PACKAGES)), yTitle(title));
+  }
+  const perUser = [
+    ["chart_unique_users_open_issues", "Issues opened", false],
+    ["chart_unique_users_open_pull_requests", "Pull requests opened", true],
+  ];
+  for (const [id, title, isPR] of perUser) {
+    const traces = people.map((k) => legendOnly(countOpened(k, users[k], isPR, true), VISIBLE_USERS));
+    await plot(id, traces, yTitle(title));
+  }
+}
+
+for (const load of [summary, downloads, prActivity, activity]) {
+  load().catch((err) => console.error(err));
+}

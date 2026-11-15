@@ -47,8 +47,11 @@ served by GitHub Pages from `docs/`. It has four kinds of page:
  * **Benchmarks**: every benchmark with its latest value, recent changes and a
    sparkline. Click a benchmark for a plot of each metric over time; click a
    point in a plot to open the run.
+ * **Repo activity** (`docs/repositories/`): downloads, issues and pull
+   requests across the jump-dev repositories, drawn with Plotly from the files
+   that `scripts/repositories.jl` writes to `docs/repositories/`.
 
-The pages are plain JavaScript in `docs/assets/` with no dependencies. They
+The other pages are plain JavaScript in `docs/assets/` with no dependencies. They
 read the files that `scripts/benchmarks.jl --publish` writes from the raw
 results in `data/`:
 
